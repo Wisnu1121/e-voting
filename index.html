@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Voting Pilkades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; user-select: none; }
+        .bg-header { background: linear-gradient(to right, #ff4b4b, #ffb0b0); }
+        .bg-header-admin { background: linear-gradient(to right, #0f172a, #1e293b); }
+        .candidate-card { transition: all 0.2s ease-in-out; }
+        .candidate-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+        }
+        /* Animasi fade in untuk tombol */
+        .fade-in { animation: fadeIn 1s ease-in-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen w-full flex flex-col overflow-hidden relative">
+
+    <!-- 1. SCREEN: SCAN BARCODE -->
+    <div id="screen-scan" class="flex flex-col h-full w-full justify-center items-center bg-white z-10 absolute inset-0">
+        <h2 class="text-3xl font-bold mb-4 text-gray-800">Arahkan kamera ke QR code</h2>
+        <p class="text-gray-500 mb-8">Pastikan QR code berada dalam kotak untuk memindai surat undangan.</p>
+        
+        <div id="reader" class="w-[500px] h-[500px] bg-gray-200 rounded-lg overflow-hidden border-4 border-gray-300 shadow-lg"></div>
+        
+        <!-- Tombol manual untuk keperluan testing jika kamera tidak ada -->
+        <button onclick="startVoting('DUMMY-QR-12345')" class="mt-8 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg shadow hover:bg-gray-300 font-semibold">
+            [Simulasi] Lewati Scan & Mulai Memilih
+        </button>
+
+        <!-- Tombol Admin (Hasil Voting) - Tetap ada sebagai opsi alternatif -->
+        <button onclick="showResults()" class="absolute bottom-6 right-6 px-4 py-2 bg-gray-800 text-white rounded-md shadow-lg hover:bg-gray-700 font-medium flex items-center gap-2 transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Dashboard Admin
+        </button>
+    </div>
+
+    <!-- 2. SCREEN: SURAT SUARA -->
+    <div id="screen-voting" class="hidden flex-col h-full w-full absolute inset-0 bg-white">
+        <!-- Header -->
+        <div class="bg-header text-white text-center py-6 shadow-md flex items-center justify-center relative">
+            <div class="absolute left-6 w-16 h-16 bg-white rounded-full flex items-center justify-center p-1">
+                <img src="suang.png" class="w-full h-full object-contain" alt="Logo">
+            </div>
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-wide">SURAT SUARA</h1>
+                <p class="text-lg font-semibold mt-1 uppercase">Pemilihan Kepala Desa Sukamandi</p>
+                <p class="text-sm opacity-90">Kecamatan Sagalaherang, Kabupaten Subang</p>
+            </div>
+        </div>
+
+        <!-- Kandidat -->
+        <div class="flex-grow flex flex-col items-center justify-center p-8 bg-gray-50">
+            <div class="flex gap-6 justify-center w-full max-w-6xl">
+                <div id="candidates-container" class="flex gap-6 justify-center w-full"></div>
+            </div>
+
+            <!-- Tombol Konfirmasi -->
+            <div class="mt-12 w-full flex justify-center h-16">
+                <button id="btn-pilih" disabled onclick="showModal()" class="bg-gray-400 text-white font-bold text-xl px-12 py-4 rounded-xl shadow-lg transition-all duration-300 cursor-not-allowed">
+                    PILIH KANDIDAT INI
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MODAL KONFIRMASI -->
+    <div id="modal-konfirmasi" class="hidden fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center">
+        <div class="bg-white rounded-2xl w-[500px] overflow-hidden shadow-2xl transform transition-all">
+            <div class="bg-blue-600 text-white py-4 px-6">
+                <h3 class="text-xl font-bold">Konfirmasi Pemilihan</h3>
+            </div>
+            <div class="p-8 flex flex-col items-center text-center">
+                <p class="text-gray-600 mb-6 text-lg">Apakah Anda yakin akan memilih kandidat ini?</p>
+                <img id="modal-foto" src="" class="w-40 h-48 object-cover rounded-lg border-2 border-gray-200 shadow-sm mb-4">
+                <h4 id="modal-nama" class="text-2xl font-bold text-gray-800">Nama Kandidat</h4>
+                <p class="text-gray-500 font-semibold mb-8">Kandidat No. <span id="modal-nomor">X</span></p>
+
+                <div class="flex gap-4 w-full">
+                    <button onclick="hideModal()" class="flex-1 py-3 font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border border-red-200">
+                        ULANGI
+                    </button>
+                    <button onclick="submitVote()" class="flex-1 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                        PILIH
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. SCREEN: STRUK AUDIT (RECEIPT) -->
+    <div id="screen-receipt" class="hidden flex-col h-full w-full justify-center items-center bg-gray-100 z-[70] absolute inset-0">
+        <h2 class="text-3xl font-bold text-gray-800 mb-8">Memproses Suara Anda...</h2>
+        <div class="relative w-80 bg-gray-800 rounded-t-xl h-8 shadow-2xl z-20 flex justify-center">
+            <div class="w-64 h-2 bg-black mt-2 rounded-full"></div>
+        </div>
+        
+        <div id="receipt-paper" class="w-72 bg-white shadow-xl flex flex-col items-center p-6 transform translate-y-[-100%] transition-transform duration-1000 ease-out z-10 border border-gray-200">
+            <div class="w-12 h-12 mb-2">
+                <img src="kpu.png" class="w-full h-full object-contain">
+            </div>
+            <p class="text-[10px] font-bold text-center uppercase leading-tight mb-4 border-b border-dashed border-gray-400 pb-2 w-full">
+                SURAT AUDIT<br>PEMILIHAN KEPALA DESA SUKAMANDI<br>TPS 8 / BILIK 1
+            </p>
+            <div id="qrcode-receipt" class="mb-4"></div>
+            <p class="text-[8px] text-center text-gray-500 break-all w-full font-mono mt-2" id="receipt-hash"></p>
+            <p class="text-[10px] font-bold mt-4">TERIMA KASIH</p>
+        </div>
+        <p class="mt-12 text-gray-600 font-medium text-lg">Silakan ambil struk ini dan masukkan ke kotak audit.</p>
+
+        <!-- AKSI SETELAH VOTING -->
+        <div id="receipt-actions" class="mt-8 hidden opacity-0 flex gap-4 z-20">
+            <button onclick="resetApp()" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg shadow hover:bg-gray-50 transition">
+                Pemilih Selanjutnya
+            </button>
+            <button onclick="showResultsFromReceipt()" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
+                Lihat Hasil Voting
+            </button>
+        </div>
+    </div>
+
+    <!-- 5. SCREEN: DASHBOARD HASIL VOTING (ADMIN) -->
+    <div id="screen-results" class="hidden flex-col h-full w-full absolute inset-0 bg-slate-50 z-[80] overflow-y-auto">
+        <div class="bg-header-admin text-white py-6 px-8 shadow-md flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide">DASHBOARD HASIL VOTING</h1>
+                <p class="text-sm text-slate-300">Pilkades Sagalaherang (Data Sementara)</p>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="resetVotes()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-medium text-sm transition shadow">
+                    Reset Semua Suara
+                </button>
+                <button onclick="hideResults()" class="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-md font-medium text-sm transition shadow">
+                    Tutup & Kembali
+                </button>
+            </div>
+        </div>
+
+        <div class="p-8 max-w-5xl mx-auto w-full flex-grow">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 text-center">
+                <h2 class="text-lg text-slate-500 font-semibold mb-1">Total Suara Masuk</h2>
+                <p id="total-suara-display" class="text-5xl font-extrabold text-blue-600">0</p>
+            </div>
+
+            <div id="results-bars-container" class="flex flex-col gap-5">
+                <!-- Bar hasil akan dimuat di sini oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Kandidat
+        const candidates = [
+            { id: 1, name: "KANDIDAT 1", photo: "calon1.jpg" },
+            { id: 2, name: "AGUS SETIAWAN", photo: "calon2.jpg" },
+            
+        ];
+
+        let selectedCandidate = null;
+        let qrScanner = null;
+
+        window.onload = () => {
+            initScanner();
+            renderCandidates();
+        };
+
+        function initScanner() {
+            qrScanner = new Html5Qrcode("reader");
+            qrScanner.start(
+                { facingMode: "user" },
+                { fps: 10, qrbox: { width: 300, height: 300 } },
+                (decodedText) => {
+                    qrScanner.stop().then(() => startVoting(decodedText));
+                },
+                (errorMessage) => { /* ignore */ }
+            ).catch(err => console.warn("Kamera tidak tersedia."));
+        }
+
+        function startVoting(qrData) {
+            document.getElementById('screen-scan').classList.add('hidden');
+            document.getElementById('screen-voting').classList.remove('hidden');
+            document.getElementById('screen-voting').classList.add('flex');
+        }
+
+        function renderCandidates() {
+            const container = document.getElementById('candidates-container');
+            container.innerHTML = '';
+            
+            candidates.forEach(c => {
+                const card = document.createElement('div');
+                card.className = `candidate-card flex-1 bg-white border-2 border-gray-200 rounded-xl overflow-hidden cursor-pointer shadow-sm relative pt-10`;
+                card.onclick = () => selectCandidate(c.id);
+                
+                card.innerHTML = `
+                    <div class="absolute top-0 left-0 w-full h-8 bg-gray-100 border-b-2 border-gray-200 flex items-center justify-center">
+                        <span class="font-bold text-gray-700 text-lg">${c.id}</span>
+                    </div>
+                    <div class="p-4 flex flex-col items-center">
+                        <div class="w-32 h-40 bg-gray-200 rounded-md overflow-hidden mb-4 border border-gray-300">
+                            <img src="${c.photo}" class="w-full h-full object-cover">
+                        </div>
+                        <h3 class="text-center font-bold text-sm text-gray-800 leading-tight min-h-[40px]">${c.name}</h3>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectCandidate(id) {
+            selectedCandidate = candidates.find(c => c.id === id);
+            document.querySelectorAll('.candidate-card').forEach((card, index) => {
+                index + 1 === id ? card.classList.add('selected') : card.classList.remove('selected');
+            });
+            const btn = document.getElementById('btn-pilih');
+            btn.disabled = false;
+            btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            btn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'hover:scale-105');
+        }
+
+        function showModal() {
+            if (!selectedCandidate) return;
+            document.getElementById('modal-foto').src = selectedCandidate.photo;
+            document.getElementById('modal-nama').innerText = selectedCandidate.name;
+            document.getElementById('modal-nomor').innerText = selectedCandidate.id;
+            document.getElementById('modal-konfirmasi').classList.remove('hidden');
+        }
+
+        function hideModal() { document.getElementById('modal-konfirmasi').classList.add('hidden'); }
+
+        function submitVote() {
+            hideModal();
+            let perolehan = JSON.parse(localStorage.getItem('perolehan_suara')) || {};
+            perolehan[selectedCandidate.id] = (perolehan[selectedCandidate.id] || 0) + 1;
+            localStorage.setItem('perolehan_suara', JSON.stringify(perolehan));
+
+            document.getElementById('screen-voting').classList.add('hidden');
+            document.getElementById('screen-voting').classList.remove('flex');
+            document.getElementById('screen-receipt').classList.remove('hidden');
+            document.getElementById('screen-receipt').classList.add('flex');
+
+            // Sembunyikan tombol sebelum struk keluar
+            const actionContainer = document.getElementById('receipt-actions');
+            actionContainer.classList.add('hidden');
+            actionContainer.classList.remove('fade-in');
+
+            setTimeout(() => {
+                document.getElementById('receipt-paper').style.transform = 'translateY(0)';
+                const hashStr = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                document.getElementById('receipt-hash').innerText = hashStr;
+                document.getElementById('qrcode-receipt').innerHTML = '';
+                new QRCode(document.getElementById("qrcode-receipt"), { text: hashStr, width: 100, height: 100 });
+
+                // Tampilkan tombol "Lihat Hasil" dan "Pemilih Selanjutnya" setelah struk selesai keluar (2 detik)
+                // Menggantikan fungsi auto-reload sebelumnya
+                setTimeout(() => {
+                    actionContainer.classList.remove('hidden');
+                    actionContainer.classList.add('fade-in');
+                }, 2000);
+
+            }, 500);
+        }
+
+        function resetApp() {
+            window.location.reload();
+        }
+
+        // ================= FITUR DASHBOARD ADMIN =================
+
+        function showResultsFromReceipt() {
+            document.getElementById('screen-receipt').classList.add('hidden');
+            document.getElementById('screen-receipt').classList.remove('flex');
+            showResults();
+        }
+
+        function showResults() {
+            document.getElementById('screen-scan').classList.add('hidden');
+            document.getElementById('screen-results').classList.remove('hidden');
+            document.getElementById('screen-results').classList.add('flex');
+            
+            const perolehan = JSON.parse(localStorage.getItem('perolehan_suara')) || {};
+            let totalSuara = 0;
+            candidates.forEach(c => totalSuara += (perolehan[c.id] || 0));
+            
+            document.getElementById('total-suara-display').innerText = totalSuara;
+            const container = document.getElementById('results-bars-container');
+            container.innerHTML = '';
+            
+            // Urutkan berdasarkan suara terbanyak
+            let sortedCandidates = [...candidates].sort((a, b) => (perolehan[b.id] || 0) - (perolehan[a.id] || 0));
+            
+            sortedCandidates.forEach((c, index) => {
+                const votes = perolehan[c.id] || 0;
+                const percentage = totalSuara === 0 ? 0 : ((votes / totalSuara) * 100).toFixed(1);
+                const isWinner = index === 0 && votes > 0; // Highlight nomor 1
+                
+                container.innerHTML += `
+                    <div class="bg-white p-5 rounded-xl shadow-sm border ${isWinner ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'} flex items-center gap-6">
+                        <div class="w-16 flex-shrink-0 text-center">
+                            <span class="text-3xl font-black text-slate-300">#${c.id}</span>
+                        </div>
+                        <img src="${c.photo}" class="w-16 h-16 object-cover rounded-full shadow-sm">
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-slate-800 ${isWinner ? 'text-blue-700' : ''}">${c.name}</h3>
+                            <div class="w-full bg-slate-100 rounded-full h-4 mt-2 overflow-hidden">
+                                <div class="bg-gradient-to-r ${isWinner ? 'from-blue-500 to-indigo-600' : 'from-slate-400 to-slate-500'} h-4 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-right w-24">
+                            <p class="text-3xl font-black ${isWinner ? 'text-blue-600' : 'text-slate-700'}">${votes}</p>
+                            <p class="text-sm font-semibold text-slate-400">${percentage}%</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function hideResults() {
+            // Ketika ditutup dari halaman hasil, arahkan kembali ke awal (Scan)
+            window.location.reload();
+        }
+
+        function resetVotes() {
+            if(confirm("PERINGATAN: Anda yakin ingin menghapus SEMUA data suara? Tindakan ini tidak bisa dibatalkan.")) {
+                localStorage.removeItem('perolehan_suara');
+                showResults(); // refresh dashboard
+            }
+        }
+    </script>
+</body>
+</html>
