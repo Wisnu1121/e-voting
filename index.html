@@ -3,72 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>E-Voting Pilkades</title>
+    <title>Bilik Suara - E-Voting</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Firebase SDK (Versi 8 agar mudah dipasang via CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         .bg-header { background: linear-gradient(to right, #ff4b4b, #d80000); }
         .candidate-card { transition: all 0.2s ease-in-out; }
         .candidate-card.selected {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            transform: scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+            border-color: #3b82f6; background-color: #eff6ff;
+            transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
         }
         .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-full flex flex-col overflow-hidden relative text-sm sm:text-base">
 
+    <!-- KONFIGURASI FIREBASE ANDA DI SINI -->
+    <script>
+        // MASUKKAN KODE FIREBASE CONFIG DARI LANGKAH 1 DI BAWAH INI:
+        const firebaseConfig = {
+  apiKey: "AIzaSyBymd_mXiq2Jq2sqlNzq1Ajd4EPbhbAgXY",
+  authDomain: "pilkadespurwadadi.firebaseapp.com",
+  databaseURL: "https://pilkadespurwadadi-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pilkadespurwadadi",
+  storageBucket: "pilkadespurwadadi.firebasestorage.app",
+  messagingSenderId: "847293750616",
+  appId: "1:847293750616:web:b429fd9b4548df94c4592d"
+};
+        
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+    </script>
+
     <!-- 1. SCREEN: SCAN BARCODE -->
     <div id="screen-scan" class="flex flex-col h-full w-full bg-[#f4f7fa] z-10 absolute inset-0">
-        <!-- Header Layar Penuh -->
         <div class="bg-[#124090] text-white px-4 py-3 flex justify-between items-center shadow-md shrink-0">
             <h1 class="text-[11px] sm:text-sm font-bold uppercase truncate pr-2 tracking-wide">SIMULASI PEMILIHAN KEPALA DESA</h1>
-            <button onclick="toggleFullScreen()" class="border border-white/60 px-3 py-1.5 text-[10px] sm:text-xs rounded hover:bg-white/20 transition shrink-0 font-semibold">
-                LAYAR PENUH
-            </button>
+            <button onclick="toggleFullScreen()" class="border border-white/60 px-3 py-1.5 text-[10px] sm:text-xs rounded hover:bg-white/20 transition shrink-0 font-semibold">LAYAR PENUH</button>
         </div>
 
         <div class="flex-grow flex flex-col items-center pt-6 px-4 pb-20 overflow-y-auto">
-            <p class="text-center text-slate-500 text-[13px] sm:text-sm mb-6 max-w-md leading-relaxed">
-                Putar perangkat ke posisi landscape untuk tampilan<br>terbaik.
-            </p>
-            
+            <p class="text-center text-slate-500 text-[13px] sm:text-sm mb-6 max-w-md leading-relaxed">Putar perangkat ke posisi landscape untuk tampilan<br>terbaik.</p>
             <h2 class="text-2xl sm:text-3xl font-extrabold text-[#124090] mb-3 tracking-wide">STANDBY SCAN</h2>
-            <p class="text-slate-600 text-sm sm:text-base text-center mb-6 max-w-md">
-                Arahkan kamera ke QR Code untuk memulai pemilihan.
-            </p>
+            <p class="text-slate-600 text-sm sm:text-base text-center mb-6 max-w-md">Arahkan kamera ke QR Code untuk memulai pemilihan.</p>
             
-            <!-- Video Reader -->
             <div id="reader" class="w-full max-w-[380px] bg-white rounded-2xl overflow-hidden shadow-sm relative mb-6"></div>
             
             <p class="text-slate-500 text-[13px] sm:text-sm mb-8 font-medium">Kamera aktif. Arahkan ke QR Code.</p>
 
-            <!-- Utility Buttons -->
             <div class="flex flex-wrap justify-center gap-3 w-full max-w-[400px]">
-                <button onclick="switchCamera()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 font-semibold flex items-center gap-2 transition-colors text-xs sm:text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-                    </svg>
-                    Tukar Kamera
-                </button>
-                <button onclick="startVoting('DUMMY-QR')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 font-semibold text-xs sm:text-sm">
-                    Simulasi Memilih
-                </button>
+                <button onclick="switchCamera()" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 font-semibold flex items-center gap-2 transition-colors text-xs sm:text-sm">Tukar Kamera</button>
+                <button onclick="startVoting('DUMMY-QR')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg shadow-sm hover:bg-gray-50 font-semibold text-xs sm:text-sm">Simulasi Memilih</button>
             </div>
         </div>
     </div>
 
     <!-- 2. SCREEN: SURAT SUARA -->
     <div id="screen-voting" class="hidden flex-col h-full w-full absolute inset-0 bg-white">
-        <!-- Header (Logo di atas Surat Suara tanpa border bulat) -->
         <div class="bg-header text-white py-4 px-4 sm:py-6 sm:px-6 shadow-md flex flex-col items-center justify-center relative shrink-0 gap-2">
             <img src="suang.png" class="h-16 sm:h-20 object-contain drop-shadow-md" alt="Logo">
             <div class="text-center mt-1">
@@ -78,14 +80,11 @@
             </div>
         </div>
 
-        <!-- Kandidat -->
         <div class="flex-grow flex flex-col items-center justify-start sm:justify-center p-4 sm:p-8 bg-gray-50 overflow-y-auto w-full">
             <div id="candidates-container" class="flex gap-3 sm:gap-6 justify-center w-full max-w-6xl flex-wrap"></div>
 
             <div class="mt-8 sm:mt-12 w-full flex justify-center pb-8 shrink-0">
-                <button id="btn-pilih" disabled onclick="showModal()" class="bg-gray-400 text-white font-bold text-lg sm:text-xl px-8 sm:px-12 py-3 sm:py-4 rounded-xl shadow-lg transition-all duration-300 cursor-not-allowed">
-                    PILIH KANDIDAT INI
-                </button>
+                <button id="btn-pilih" disabled onclick="showModal()" class="bg-gray-400 text-white font-bold text-lg sm:text-xl px-8 sm:px-12 py-3 sm:py-4 rounded-xl shadow-lg transition-all duration-300 cursor-not-allowed">PILIH KANDIDAT INI</button>
             </div>
         </div>
     </div>
@@ -105,12 +104,8 @@
                 <p class="text-gray-500 font-semibold mb-6 sm:mb-8 text-sm sm:text-base mt-1">Kandidat No. <span id="modal-nomor">X</span></p>
 
                 <div class="flex gap-3 sm:gap-4 w-full">
-                    <button onclick="hideModal()" class="flex-1 py-2.5 sm:py-3 font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border border-red-200 text-sm sm:text-base">
-                        ULANGI
-                    </button>
-                    <button onclick="submitVote()" class="flex-1 py-2.5 sm:py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg text-sm sm:text-base">
-                        PILIH
-                    </button>
+                    <button onclick="hideModal()" class="flex-1 py-2.5 sm:py-3 font-bold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors border border-red-200 text-sm sm:text-base">ULANGI</button>
+                    <button id="btn-submit-final" onclick="submitVote()" class="flex-1 py-2.5 sm:py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-lg text-sm sm:text-base">PILIH</button>
                 </div>
             </div>
         </div>
@@ -118,7 +113,7 @@
 
     <!-- 4. SCREEN: STRUK AUDIT (RECEIPT) -->
     <div id="screen-receipt" class="hidden flex-col h-full w-full justify-center items-center bg-gray-100 z-[70] absolute inset-0 p-4">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-8 text-center">Memproses Suara...</h2>
+        <h2 id="status-text" class="text-2xl sm:text-3xl font-bold text-gray-800 mb-8 text-center">Memproses Suara...</h2>
         <div class="relative w-72 sm:w-80 max-w-full bg-gray-800 rounded-t-xl h-6 sm:h-8 shadow-2xl z-20 flex justify-center">
             <div class="w-56 sm:w-64 h-1.5 sm:h-2 bg-black mt-2 rounded-full"></div>
         </div>
@@ -127,7 +122,7 @@
                 <img src="kpu.png" class="w-full h-full object-contain">
             </div>
             <p class="text-[9px] sm:text-[10px] font-bold text-center uppercase leading-tight mb-4 border-b border-dashed border-gray-400 pb-2 w-full">
-                SURAT SUARA<br>Pilkades Purwadadi Timur<br>TPS 1 / BILIK 1
+                SURAT AUDIT<br>Pilkades Purwadadi Timur<br>TPS 1 / BILIK 1
             </p>
             <div id="qrcode-receipt" class="mb-4"></div>
             <p class="text-[7px] sm:text-[8px] text-center text-gray-500 break-all w-full font-mono mt-2" id="receipt-hash"></p>
@@ -136,9 +131,7 @@
         <p class="mt-10 text-gray-600 font-medium text-sm sm:text-lg text-center px-4">Silakan ambil struk ini dan masukkan ke kotak audit.</p>
 
         <div id="receipt-actions" class="mt-6 hidden opacity-0 flex flex-col sm:flex-row justify-center gap-3 w-full max-w-xs sm:max-w-none z-20">
-            <button onclick="resetApp()" class="w-full sm:w-auto px-8 py-2.5 sm:py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition text-sm sm:text-base">
-                Pemilih Selanjutnya
-            </button>
+            <button onclick="resetApp()" class="w-full sm:w-auto px-8 py-2.5 sm:py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition text-sm sm:text-base">Pemilih Selanjutnya</button>
         </div>
     </div>
 
@@ -165,13 +158,9 @@
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch((err) => {
-                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
-                });
+                document.documentElement.requestFullscreen().catch((err) => {});
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
             }
         }
 
@@ -184,15 +173,11 @@
                         qrScanner.stop().then(() => {
                             isCameraRunning = false;
                             startVoting(decodedText);
-                        }).catch(err => console.log(err));
+                        });
                     }
                 },
-                (errorMessage) => { /* ignore */ }
-            ).then(() => {
-                isCameraRunning = true;
-            }).catch(err => {
-                console.warn("Kamera tidak tersedia atau izin ditolak.", err);
-            });
+                (errorMessage) => {}
+            ).then(() => { isCameraRunning = true; }).catch(err => { console.warn("Kamera tidak tersedia"); });
         }
 
         function switchCamera() {
@@ -201,7 +186,7 @@
                     isCameraRunning = false;
                     currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
                     startCamera();
-                }).catch(err => console.error("Gagal menghentikan kamera", err));
+                });
             } else {
                 currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
                 startCamera();
@@ -263,12 +248,25 @@
         function hideModal() { document.getElementById('modal-konfirmasi').classList.add('hidden'); }
 
         function submitVote() {
-            hideModal();
-            // Data tetap disave di sistem lokal jika suatu saat ingin diperiksa
-            let perolehan = JSON.parse(localStorage.getItem('perolehan_suara')) || {};
-            perolehan[selectedCandidate.id] = (perolehan[selectedCandidate.id] || 0) + 1;
-            localStorage.setItem('perolehan_suara', JSON.stringify(perolehan));
+            document.getElementById('btn-submit-final').disabled = true;
+            document.getElementById('btn-submit-final').innerText = "Menyimpan...";
+            
+            // SIMPAN KE FIREBASE INTERNET
+            const kandidatRef = db.ref('perolehan_suara/kandidat_' + selectedCandidate.id);
+            kandidatRef.transaction((currentVotes) => {
+                return (currentVotes || 0) + 1;
+            }, (error, committed, snapshot) => {
+                if (error) {
+                    alert("Gagal terhubung ke Server Internet! Periksa koneksi Anda.");
+                    window.location.reload();
+                } else if (committed) {
+                    tampilkanStruk();
+                }
+            });
+        }
 
+        function tampilkanStruk() {
+            hideModal();
             document.getElementById('screen-voting').classList.add('hidden');
             document.getElementById('screen-voting').classList.remove('flex');
             document.getElementById('screen-receipt').classList.remove('hidden');
@@ -277,6 +275,8 @@
             const actionContainer = document.getElementById('receipt-actions');
             actionContainer.classList.add('hidden');
             actionContainer.classList.remove('fade-in');
+
+            document.getElementById('status-text').innerText = "Suara Berhasil Disimpan!";
 
             setTimeout(() => {
                 document.getElementById('receipt-paper').style.transform = 'translateY(0)';
