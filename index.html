@@ -10,7 +10,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
         .bg-header { background: linear-gradient(to right, #ff4b4b, #d80000); }
-        .bg-header-admin { background: linear-gradient(to right, #0f172a, #1e293b); }
         .candidate-card { transition: all 0.2s ease-in-out; }
         .candidate-card.selected {
             border-color: #3b82f6;
@@ -27,7 +26,7 @@
 </head>
 <body class="bg-gray-100 h-screen w-full flex flex-col overflow-hidden relative text-sm sm:text-base">
 
-    <!-- 1. SCREEN: SCAN BARCODE (DIPERBARUI SESUAI SCREENSHOT) -->
+    <!-- 1. SCREEN: SCAN BARCODE -->
     <div id="screen-scan" class="flex flex-col h-full w-full bg-[#f4f7fa] z-10 absolute inset-0">
         <!-- Header Layar Penuh -->
         <div class="bg-[#124090] text-white px-4 py-3 flex justify-between items-center shadow-md shrink-0">
@@ -47,7 +46,7 @@
                 Arahkan kamera ke QR Code untuk memulai pemilihan.
             </p>
             
-            <!-- Video Reader (Lebih proporsional) -->
+            <!-- Video Reader -->
             <div id="reader" class="w-full max-w-[380px] bg-white rounded-2xl overflow-hidden shadow-sm relative mb-6"></div>
             
             <p class="text-slate-500 text-[13px] sm:text-sm mb-8 font-medium">Kamera aktif. Arahkan ke QR Code.</p>
@@ -65,24 +64,14 @@
                 </button>
             </div>
         </div>
-
-        <!-- Tombol Admin (Floating) -->
-        <button onclick="showResults()" class="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 px-4 py-2.5 bg-[#124090] text-white rounded-full shadow-lg hover:bg-blue-900 font-medium flex items-center gap-2 transition-all text-xs sm:text-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Admin
-        </button>
     </div>
 
     <!-- 2. SCREEN: SURAT SUARA -->
     <div id="screen-voting" class="hidden flex-col h-full w-full absolute inset-0 bg-white">
-        <!-- Header -->
-        <div class="bg-header text-white py-3 px-3 sm:py-5 sm:px-6 shadow-md flex items-center gap-3 sm:gap-4 relative shrink-0">
-            <div class="w-14 h-14 sm:w-16 sm:h-16 bg-white rounded-full flex-shrink-0 flex items-center justify-center p-1.5 shadow-md">
-                <img src="suang.png" class="w-full h-full object-contain" alt="Logo">
-            </div>
-            <div class="flex-grow text-left sm:text-center sm:pr-16">
+        <!-- Header (Logo di atas Surat Suara tanpa border bulat) -->
+        <div class="bg-header text-white py-4 px-4 sm:py-6 sm:px-6 shadow-md flex flex-col items-center justify-center relative shrink-0 gap-2">
+            <img src="suang.png" class="h-16 sm:h-20 object-contain drop-shadow-md" alt="Logo">
+            <div class="text-center mt-1">
                 <h1 class="text-xl sm:text-3xl font-extrabold tracking-wide leading-none">SURAT SUARA</h1>
                 <p class="text-[11px] sm:text-lg font-semibold mt-1 uppercase leading-tight">Pemilihan Kepala Desa Sukamandi</p>
                 <p class="text-[9px] sm:text-sm opacity-90 mt-0.5 leading-tight">Kecamatan Sagalaherang, Kabupaten Subang</p>
@@ -147,43 +136,14 @@
         <p class="mt-10 text-gray-600 font-medium text-sm sm:text-lg text-center px-4">Silakan ambil struk ini dan masukkan ke kotak audit.</p>
 
         <div id="receipt-actions" class="mt-6 hidden opacity-0 flex flex-col sm:flex-row justify-center gap-3 w-full max-w-xs sm:max-w-none z-20">
-            <button onclick="resetApp()" class="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg shadow hover:bg-gray-50 transition text-sm sm:text-base">
+            <button onclick="resetApp()" class="w-full sm:w-auto px-8 py-2.5 sm:py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition text-sm sm:text-base">
                 Pemilih Selanjutnya
             </button>
-            <button onclick="showResultsFromReceipt()" class="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm sm:text-base">
-                Lihat Hasil
-            </button>
-        </div>
-    </div>
-
-    <!-- 5. SCREEN: DASHBOARD HASIL VOTING (ADMIN) -->
-    <div id="screen-results" class="hidden flex-col h-full w-full absolute inset-0 bg-slate-50 z-[80] overflow-hidden">
-        <div class="bg-header-admin text-white py-4 px-4 sm:py-6 sm:px-8 shadow-md flex justify-between items-center sticky top-0 z-10 shrink-0">
-            <div>
-                <h1 class="text-lg sm:text-2xl font-bold tracking-wide">HASIL VOTING</h1>
-                <p class="text-[10px] sm:text-sm text-slate-300">Pilkades Sukamandi (Sementara)</p>
-            </div>
-            <div class="flex gap-2 sm:gap-4">
-                <button onclick="resetVotes()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-600 hover:bg-red-700 rounded-md font-medium text-xs sm:text-sm transition shadow">
-                    Reset
-                </button>
-                <button onclick="hideResults()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-600 hover:bg-slate-500 rounded-md font-medium text-xs sm:text-sm transition shadow">
-                    Kembali
-                </button>
-            </div>
-        </div>
-
-        <div class="p-4 sm:p-8 max-w-5xl mx-auto w-full flex-grow overflow-y-auto">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 mb-6 sm:mb-8 text-center">
-                <h2 class="text-sm sm:text-lg text-slate-500 font-semibold mb-1">Total Suara Masuk</h2>
-                <p id="total-suara-display" class="text-4xl sm:text-5xl font-extrabold text-blue-600">0</p>
-            </div>
-            <div id="results-bars-container" class="flex flex-col gap-3 sm:gap-5 pb-8"></div>
         </div>
     </div>
 
     <script>
-        // Data Kandidat Anda
+        // Data Kandidat
         const candidates = [
             { id: 1, name: "KANDIDAT 1", photo: "calon1.jpg" },
             { id: 2, name: "AGUS SETIAWAN", photo: "calon2.jpg" }
@@ -301,6 +261,7 @@
 
         function submitVote() {
             hideModal();
+            // Data tetap disave di sistem lokal jika suatu saat ingin diperiksa
             let perolehan = JSON.parse(localStorage.getItem('perolehan_suara')) || {};
             perolehan[selectedCandidate.id] = (perolehan[selectedCandidate.id] || 0) + 1;
             localStorage.setItem('perolehan_suara', JSON.stringify(perolehan));
@@ -330,67 +291,6 @@
 
         function resetApp() {
             window.location.reload();
-        }
-
-        function showResultsFromReceipt() {
-            document.getElementById('screen-receipt').classList.add('hidden');
-            document.getElementById('screen-receipt').classList.remove('flex');
-            showResults();
-        }
-
-        function showResults() {
-            if(isCameraRunning) {
-                qrScanner.stop().then(() => { isCameraRunning = false; }).catch(e => console.log(e));
-            }
-            document.getElementById('screen-scan').classList.add('hidden');
-            document.getElementById('screen-results').classList.remove('hidden');
-            document.getElementById('screen-results').classList.add('flex');
-            
-            const perolehan = JSON.parse(localStorage.getItem('perolehan_suara')) || {};
-            let totalSuara = 0;
-            candidates.forEach(c => totalSuara += (perolehan[c.id] || 0));
-            
-            document.getElementById('total-suara-display').innerText = totalSuara;
-            const container = document.getElementById('results-bars-container');
-            container.innerHTML = '';
-            
-            let sortedCandidates = [...candidates].sort((a, b) => (perolehan[b.id] || 0) - (perolehan[a.id] || 0));
-            
-            sortedCandidates.forEach((c, index) => {
-                const votes = perolehan[c.id] || 0;
-                const percentage = totalSuara === 0 ? 0 : ((votes / totalSuara) * 100).toFixed(1);
-                const isWinner = index === 0 && votes > 0;
-                
-                container.innerHTML += `
-                    <div class="bg-white p-3 sm:p-5 rounded-xl shadow-sm border ${isWinner ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'} flex items-center gap-3 sm:gap-4">
-                        <div class="w-10 sm:w-16 flex-shrink-0 text-center">
-                            <span class="text-xl sm:text-3xl font-black text-slate-300">#${c.id}</span>
-                        </div>
-                        <img src="${c.photo}" class="w-10 h-10 sm:w-16 sm:h-16 object-cover rounded-full shadow-sm">
-                        <div class="flex-grow w-full">
-                            <h3 class="font-bold text-sm sm:text-lg text-slate-800 ${isWinner ? 'text-blue-700' : ''}">${c.name}</h3>
-                            <div class="w-full bg-slate-100 rounded-full h-2.5 sm:h-4 mt-1.5 overflow-hidden">
-                                <div class="bg-gradient-to-r ${isWinner ? 'from-blue-500 to-indigo-600' : 'from-slate-400 to-slate-500'} h-full rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
-                            </div>
-                        </div>
-                        <div class="text-right w-16 sm:w-24 shrink-0">
-                            <p class="text-xl sm:text-3xl font-black ${isWinner ? 'text-blue-600' : 'text-slate-700'} leading-none">${votes}</p>
-                            <p class="text-[10px] sm:text-sm font-semibold text-slate-400 mt-1">${percentage}%</p>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function hideResults() {
-            window.location.reload();
-        }
-
-        function resetVotes() {
-            if(confirm("PERINGATAN: Anda yakin ingin menghapus SEMUA data suara? Tindakan ini tidak bisa dibatalkan.")) {
-                localStorage.removeItem('perolehan_suara');
-                showResults();
-            }
         }
     </script>
 </body>
