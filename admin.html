@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Server Admin - Pilkades</title>
+    <title>Login Admin - Server Pusat Pilkades</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Firebase SDK -->
@@ -19,21 +19,23 @@
             object-fit: contain !important;
             background-color: #f8fafc;
         }
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
-<body class="flex flex-col h-screen w-full overflow-hidden">
+<body class="flex flex-col h-screen w-full overflow-hidden bg-slate-100">
 
-    <!-- KONFIGURASI FIREBASE ANDA DI SINI -->
+    <!-- KONFIGURASI FIREBASE ANDA -->
     <script>
         const firebaseConfig = {
-  apiKey: "AIzaSyBymd_mXiq2Jq2sqlNzq1Ajd4EPbhbAgXY",
-  authDomain: "pilkadespurwadadi.firebaseapp.com",
-  databaseURL: "https://pilkadespurwadadi-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "pilkadespurwadadi",
-  storageBucket: "pilkadespurwadadi.firebasestorage.app",
-  messagingSenderId: "847293750616",
-  appId: "1:847293750616:web:b429fd9b4548df94c4592d"
-};
+            apiKey: "AIzaSyBymd_mXiq2Jq2sqlNzq1Ajd4EPbhbAgXY",
+            authDomain: "pilkadespurwadadi.firebaseapp.com",
+            databaseURL: "https://pilkadespurwadadi-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "pilkadespurwadadi",
+            storageBucket: "pilkadespurwadadi.firebasestorage.app",
+            messagingSenderId: "847293750616",
+            appId: "1:847293750616:web:b429fd9b4548df94c4592d"
+        };
         
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
@@ -41,39 +43,118 @@
         const db = firebase.database();
     </script>
 
-    <!-- HEADER ADMIN (Sangat rapi di HP maupun Laptop) -->
-    <div class="bg-header-admin text-white py-3 px-4 shadow-md flex justify-between items-center shrink-0">
-        <div>
-            <h1 class="text-sm sm:text-xl font-bold tracking-wide">SERVER PUSAT: HASIL VOTING</h1>
-            <p class="text-[10px] sm:text-xs text-slate-300">Pilkades Purwadadi Timur - Realtime</p>
-        </div>
-        <div class="flex items-center gap-2">
-            <span id="koneksi-status" class="px-2.5 py-1 bg-green-600/25 text-green-400 border border-green-500/50 rounded text-[11px] sm:text-xs font-semibold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                Online
-            </span>
-            <button onclick="resetVotes()" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 rounded text-[11px] sm:text-xs font-semibold text-white transition shadow">
-                Reset
-            </button>
+    <!-- ==========================================
+       1. SCREEN: LOGIN ADMIN
+       ========================================== -->
+    <div id="screen-login" class="flex flex-col h-full w-full justify-center items-center p-4 absolute inset-0 z-20 bg-slate-900/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-200 fade-in">
+            <div class="bg-header-admin text-white py-5 px-6 text-center">
+                <h2 class="text-lg sm:text-xl font-bold tracking-wide">LOGIN ADMIN</h2>
+                <p class="text-xs text-slate-300 mt-1">Server Pusat Realtime Pilkades</p>
+            </div>
+            
+            <form id="form-login" onsubmit="handleLogin(event)" class="p-6 flex flex-col gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Username</label>
+                    <input type="text" id="username" required placeholder="Masukkan username" 
+                        class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="password" required placeholder="Masukkan password" 
+                        class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+                </div>
+
+                <div id="login-error" class="hidden text-xs text-red-600 font-medium text-center bg-red-50 p-2 rounded border border-red-200">
+                    Username atau Password salah!
+                </div>
+
+                <button type="submit" class="mt-2 w-full py-3 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold rounded-lg shadow-md transition text-sm">
+                    MASUK DASHBOARD
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- KONTEN UTAMA -->
-    <div class="p-3 sm:p-6 max-w-4xl mx-auto w-full flex-grow overflow-y-auto flex flex-col gap-3">
-        <!-- Kotak Total Suara -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 text-center relative overflow-hidden shrink-0">
-            <div class="absolute top-0 left-0 w-full h-1 bg-blue-600"></div>
-            <h2 class="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider mb-0.5">Total Suara Masuk Seluruh TPS</h2>
-            <p id="total-suara-display" class="text-2xl sm:text-4xl font-extrabold text-blue-600">0</p>
+    <!-- ==========================================
+       2. SCREEN: DASHBOARD UTAMA (TERSEMBUNYI SEBELUM LOGIN)
+       ========================================== -->
+    <div id="screen-dashboard" class="hidden flex-col h-full w-full overflow-hidden absolute inset-0 z-10">
+        <!-- HEADER ADMIN -->
+        <div class="bg-header-admin text-white py-3 px-4 shadow-md flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-sm sm:text-xl font-bold tracking-wide">SERVER PUSAT: HASIL VOTING</h1>
+                <p class="text-[10px] sm:text-xs text-slate-300">Pilkades Purwadadi Timur - Realtime</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="koneksi-status" class="px-2.5 py-1 bg-green-600/25 text-green-400 border border-green-500/50 rounded text-[11px] sm:text-xs font-semibold flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                    Online
+                </span>
+                <button onclick="resetVotes()" class="px-2.5 py-1 bg-red-600 hover:bg-red-700 rounded text-[11px] sm:text-xs font-semibold text-white transition shadow">
+                    Reset
+                </button>
+                <button onclick="handleLogout()" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[11px] sm:text-xs font-semibold text-slate-200 transition shadow">
+                    Keluar
+                </button>
+            </div>
         </div>
 
-        <!-- Daftar Hasil Grafik Kandidat -->
-        <div id="results-bars-container" class="flex flex-col gap-2.5 pb-6">
-            <p class="text-center text-slate-400 text-xs sm:text-sm py-4">Memuat data dari server...</p>
+        <!-- KONTEN UTAMA -->
+        <div class="p-3 sm:p-6 max-w-4xl mx-auto w-full flex-grow overflow-y-auto flex flex-col gap-3">
+            <!-- Kotak Total Suara -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 text-center relative overflow-hidden shrink-0">
+                <div class="absolute top-0 left-0 w-full h-1 bg-blue-600"></div>
+                <h2 class="text-xs sm:text-sm text-slate-500 font-bold uppercase tracking-wider mb-0.5">Total Suara Masuk Seluruh TPS</h2>
+                <p id="total-suara-display" class="text-2xl sm:text-4xl font-extrabold text-blue-600">0</p>
+            </div>
+
+            <!-- Daftar Hasil Grafik Kandidat -->
+            <div id="results-bars-container" class="flex flex-col gap-2.5 pb-6">
+                <p class="text-center text-slate-400 text-xs sm:text-sm py-4">Memuat data dari server...</p>
+            </div>
         </div>
     </div>
 
+    <!-- SCRIPT LOGIC -->
     <script>
+        // Cek apakah admin sudah login sebelumnya di session browser
+        window.onload = () => {
+            if (sessionStorage.getItem("admin_logged_in") === "true") {
+                showDashboard();
+            }
+        };
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById("username").value.trim();
+            const pass = document.getElementById("password").value.trim();
+            const errBox = document.getElementById("login-error");
+
+            // Validasi Username & Password (sesuai permintaan: admin)
+            if (user === "admin" && pass === "admin") {
+                sessionStorage.setItem("admin_logged_in", "true");
+                errBox.classList.add("hidden");
+                showDashboard();
+            } else {
+                errBox.classList.remove("hidden");
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById("screen-login").classList.add("hidden");
+            document.getElementById("screen-dashboard").classList.remove("hidden");
+            document.getElementById("screen-dashboard").classList.add("flex");
+            initDashboardData();
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem("admin_logged_in");
+            window.location.reload();
+        }
+
+        // --- DASHBOARD REALTIME FIREBASE ---
         const candidates = [
             { id: 1, name: "VIRDA EMERITA WINESTRI", photo: "virda.png" },
             { id: 2, name: "KANDIDAT 2", photo: "calon1.jpg" },
@@ -82,28 +163,34 @@
             { id: 5, name: "KANDIDAT 5", photo: "calon1.jpg" }
         ];
 
-        const dbRef = db.ref('perolehan_suara');
-        
-        dbRef.on('value', (snapshot) => {
-            const dataServer = snapshot.val() || {};
-            let totalSuara = 0;
+        function initDashboardData() {
+            const dbRef = db.ref('perolehan_suara');
             
-            let perolehan = {};
-            candidates.forEach(c => {
-                const suaraKandidat = dataServer['kandidat_' + c.id] || 0;
-                perolehan[c.id] = suaraKandidat;
-                totalSuara += suaraKandidat;
+            dbRef.on('value', (snapshot) => {
+                const dataServer = snapshot.val() || {};
+                let totalSuara = 0;
+                
+                let perolehan = {};
+                candidates.forEach(c => {
+                    const suaraKandidat = dataServer['kandidat_' + c.id] || 0;
+                    perolehan[c.id] = suaraKandidat;
+                    totalSuara += suaraKandidat;
+                });
+                
+                document.getElementById('total-suara-display').innerText = totalSuara;
+                renderDashboard(perolehan, totalSuara);
+            }, (error) => {
+                const statusEl = document.getElementById('koneksi-status');
+                if(statusEl) {
+                    statusEl.innerHTML = "Terputus";
+                    statusEl.className = "px-2.5 py-1 bg-red-600/25 text-red-400 border border-red-500/50 rounded text-[11px] font-semibold";
+                }
             });
-            
-            document.getElementById('total-suara-display').innerText = totalSuara;
-            renderDashboard(perolehan, totalSuara);
-        }, (error) => {
-            document.getElementById('koneksi-status').innerHTML = "Terputus";
-            document.getElementById('koneksi-status').className = "px-2.5 py-1 bg-red-600/25 text-red-400 border border-red-500/50 rounded text-[11px] font-semibold";
-        });
+        }
 
         function renderDashboard(perolehan, totalSuara) {
             const container = document.getElementById('results-bars-container');
+            if(!container) return;
             container.innerHTML = '';
             
             let sortedCandidates = [...candidates].sort((a, b) => perolehan[b.id] - perolehan[a.id]);
