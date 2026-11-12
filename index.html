@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
-    <!-- Firebase SDK (Versi 8 agar mudah dipasang via CDN) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -23,114 +23,60 @@
         .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Menggunakan object-fit: contain agar foto tidak ada bagian kepala/bawah yang terpotong */
+        .candidate-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain !important;
+            background-color: #f3f4f6;
+        }
+
         /* =========================================================
            RESPONSIF MENYELURUH UNTUK LAYAR MENDATAR (LANDSCAPE)
            ========================================================= */
         @media (orientation: landscape) {
+            #screen-scan { overflow-y: auto !important; }
+            #screen-scan .bg-\[\#124090\] { padding-top: 6px !important; padding-bottom: 6px !important; }
+            #screen-scan .bg-\[\#124090\] h1 { font-size: 0.75rem !important; }
+            #screen-scan .bg-\[\#124090\] button { padding: 2px 8px !important; font-size: 0.7rem !important; }
+            #screen-scan .flex-grow { padding-top: 10px !important; padding-bottom: 20px !important; }
+            #screen-scan h2 { font-size: 1.2rem !important; margin-bottom: 2px !important; }
+            #screen-scan p { font-size: 0.75rem !important; margin-bottom: 8px !important; }
             
-            /* --- 1. HALAMAN SCAN KAMERA --- */
-            #screen-scan {
-                overflow-y: auto !important;
-            }
-            #screen-scan .bg-\[\#124090\] {
-                padding-top: 6px !important;
-                padding-bottom: 6px !important;
-            }
-            #screen-scan .bg-\[\#124090\] h1 {
-                font-size: 0.75rem !important;
-            }
-            #screen-scan .bg-\[\#124090\] button {
-                padding: 2px 8px !important;
-                font-size: 0.7rem !important;
-            }
-            #screen-scan .flex-grow {
-                padding-top: 10px !important;
-                padding-bottom: 20px !important;
-            }
-            #screen-scan h2 {
-                font-size: 1.2rem !important;
-                margin-bottom: 2px !important;
-            }
-            #screen-scan p {
-                font-size: 0.75rem !important;
-                margin-bottom: 8px !important;
-            }
-            /* Kunci agar kotak kamera/reader selalu muat dan aktif di landscape */
-            #reader {
-                width: 200px !important;
-                max-width: 200px !important;
-                max-height: 160px !important;
-                margin-bottom: 8px !important;
-            }
-            #reader video {
-                object-fit: cover !important;
-                max-height: 160px !important;
-            }
-            #screen-scan .flex.flex-wrap {
-                margin-bottom: 10px !important;
-            }
-            #screen-scan button {
-                padding: 4px 12px !important;
-                font-size: 0.75rem !important;
-            }
+            #reader { width: 200px !important; max-width: 200px !important; max-height: 160px !important; margin-bottom: 8px !important; }
+            #reader video { object-fit: cover !important; max-height: 160px !important; }
+            #screen-scan .flex.flex-wrap { margin-bottom: 10px !important; }
+            #screen-scan button { padding: 4px 12px !important; font-size: 0.75rem !important; }
 
-            /* --- 2. HALAMAN SURAT SUARA --- */
-            .bg-header {
-                flex-direction: row !important; padding: 4px 10px !important; gap: 10px !important; justify-content: center !important;
-            }
+            .bg-header { flex-direction: row !important; padding: 4px 10px !important; gap: 10px !important; justify-content: center !important; }
             .bg-header img { height: 30px !important; }
             .bg-header .text-center { text-align: left !important; margin-top: 0 !important; }
             .bg-header h1 { font-size: 0.9rem !important; }
             .bg-header p { font-size: 0.6rem !important; display: inline-block; margin-right: 5px; margin-top: 0 !important; }
 
-            #screen-voting .flex-grow {
-                padding: 4px 10px !important; justify-content: center !important; gap: 4px !important; overflow: hidden !important;
-            }
-            #candidates-container {
-                flex-wrap: nowrap !important; justify-content: center !important; align-items: center !important; gap: 1.5% !important; width: 100%;
-            }
-            .candidate-card {
-                width: 18.5% !important; max-width: 140px !important; margin: 0 !important; padding-top: 16px !important;
-            }
+            #screen-voting .flex-grow { padding: 4px 10px !important; justify-content: center !important; gap: 4px !important; overflow: hidden !important; }
+            #candidates-container { flex-wrap: nowrap !important; justify-content: center !important; align-items: center !important; gap: 1.5% !important; width: 100%; }
+            .candidate-card { width: 18.5% !important; max-width: 140px !important; margin: 0 !important; padding-top: 16px !important; }
             .candidate-card .absolute { height: 16px !important; }
             .candidate-card .absolute span { font-size: 0.75rem !important; }
             .candidate-card .p-2 { padding: 3px !important; }
-            .candidate-card .aspect-\[3\/4\] {
-                aspect-ratio: auto !important; height: 38vh !important; max-height: 105px !important; margin-bottom: 2px !important;
-            }
+            .candidate-card .aspect-\[3\/4\] { aspect-ratio: auto !important; height: 38vh !important; max-height: 105px !important; margin-bottom: 2px !important; }
             .candidate-card h3 { font-size: 0.6rem !important; min-height: 12px !important; line-height: 1.0; }
             
             .mt-8, .sm\:mt-12 { margin-top: 0 !important; }
             .pb-8 { padding-bottom: 2px !important; }
             #btn-pilih { padding: 4px 30px !important; font-size: 0.8rem !important; border-radius: 6px !important; }
 
-            /* --- 3. MODAL KONFIRMASI --- */
-            #modal-konfirmasi .bg-white {
-                max-height: 94vh !important;
-                display: flex; flex-direction: column;
-                border-radius: 12px !important;
-            }
-            #modal-konfirmasi .bg-blue-600 {
-                padding: 4px 12px !important;
-            }
-            #modal-konfirmasi .bg-blue-600 h3 {
-                font-size: 0.9rem !important;
-            }
-            #modal-konfirmasi .p-6, #modal-konfirmasi .sm\:p-8 {
-                padding: 6px 12px !important;
-                overflow-y: auto;
-            }
-            #modal-konfirmasi p.text-gray-600 {
-                margin-bottom: 2px !important; font-size: 0.75rem !important;
-            }
-            #modal-konfirmasi .w-32, #modal-konfirmasi .sm\:w-40 {
-                width: 50px !important; height: 65px !important; margin-bottom: 4px !important;
-            }
+            #modal-konfirmasi .bg-white { max-height: 94vh !important; display: flex; flex-direction: column; border-radius: 12px !important; }
+            #modal-konfirmasi .bg-blue-600 { padding: 4px 12px !important; }
+            #modal-konfirmasi .bg-blue-600 h3 { font-size: 0.9rem !important; }
+            #modal-konfirmasi .p-6, #modal-konfirmasi .sm\:p-8 { padding: 6px 12px !important; overflow-y: auto; }
+            #modal-konfirmasi p.text-gray-600 { margin-bottom: 2px !important; font-size: 0.75rem !important; }
+            #modal-konfirmasi .w-32, #modal-konfirmasi .sm\:w-40 { width: 50px !important; height: 65px !important; margin-bottom: 4px !important; }
             #modal-nama { font-size: 1rem !important; margin-bottom: 0 !important; line-height: 1; }
             #modal-konfirmasi p.text-gray-500 { margin-bottom: 4px !important; margin-top: 1px !important; font-size: 0.75rem !important; }
             #modal-konfirmasi button { padding-top: 4px !important; padding-bottom: 4px !important; font-size: 0.75rem !important; }
 
-            /* --- 4. HALAMAN STRUK AUDIT --- */
             #screen-receipt { padding: 4px !important; justify-content: center !important; }
             #status-text { font-size: 1rem !important; margin-bottom: 2px !important; }
             .bg-gray-800.rounded-t-xl { height: 10px !important; }
@@ -150,7 +96,6 @@
 
     <!-- KONFIGURASI FIREBASE ANDA DI SINI -->
     <script>
-        // MASUKKAN KODE FIREBASE CONFIG DARI LANGKAH 1 DI BAWAH INI:
         const firebaseConfig = {
   apiKey: "AIzaSyBymd_mXiq2Jq2sqlNzq1Ajd4EPbhbAgXY",
   authDomain: "pilkadespurwadadi.firebaseapp.com",
@@ -161,7 +106,6 @@
   appId: "1:847293750616:web:b429fd9b4548df94c4592d"
 };
         
-        // Inisialisasi Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -220,8 +164,9 @@
             </div>
             <div class="p-6 sm:p-8 flex flex-col items-center text-center">
                 <p class="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-lg">Apakah Anda yakin akan memilih kandidat ini?</p>
+                <!-- Ditambahkan class candidate-img agar foto di modal konfirmasi juga tidak terpotong -->
                 <div class="w-32 h-40 sm:w-40 sm:h-48 bg-gray-100 rounded-lg border-2 border-gray-200 shadow-sm mb-4 overflow-hidden">
-                    <img id="modal-foto" src="" class="w-full h-full object-cover">
+                    <img id="modal-foto" src="" class="candidate-img">
                 </div>
                 <h4 id="modal-nama" class="text-xl sm:text-2xl font-bold text-gray-800 leading-tight">Nama Kandidat</h4>
                 <p class="text-gray-500 font-semibold mb-6 sm:mb-8 text-sm sm:text-base mt-1">Kandidat No. <span id="modal-nomor">X</span></p>
@@ -259,9 +204,8 @@
     </div>
 
     <script>
-        // Data Kandidat
         const candidates = [
-            { id: 1, name: "VIRDA EMERITA WISENTRI", photo: "virda.png" },
+            { id: 1, name: "VIRDA EMERITA WINESTRI", photo: "virda.png" },
             { id: 2, name: "KANDIDAT 2", photo: "calon1.jpg" },
             { id: 3, name: "KANDIDAT 3", photo: "calon1.jpg" },
             { id: 4, name: "KANDIDAT 4", photo: "calon1.jpg" },
@@ -340,9 +284,10 @@
                     </div>
                     <div class="p-2 sm:p-4 flex flex-col items-center">
                         <div class="w-full aspect-[3/4] bg-gray-200 rounded-md overflow-hidden mb-2 sm:mb-4 border border-gray-300">
-                            <img src="${c.photo}" class="w-full h-full object-cover">
+                            <!-- Menggunakan candidate-img agar seluruh badan dan kepala foto tampil utuh tanpa terpotong -->
+                            <img src="${c.photo}" class="candidate-img">
                         </div>
-                        <h3 class="text-center font-bold text-xs sm:text-sm text-800 leading-tight min-h-[32px] sm:min-h-[40px] flex items-center justify-center w-full uppercase">${c.name}</h3>
+                        <h3 class="text-center font-bold text-xs sm:text-sm text-gray-800 leading-tight min-h-[32px] sm:min-h-[40px] flex items-center justify-center w-full uppercase">${c.name}</h3>
                     </div>
                 `;
                 container.appendChild(card);
@@ -375,7 +320,6 @@
             document.getElementById('btn-submit-final').disabled = true;
             document.getElementById('btn-submit-final').innerText = "Menyimpan...";
             
-            // SIMPAN KE FIREBASE INTERNET
             const kandidatRef = db.ref('perolehan_suara/kandidat_' + selectedCandidate.id);
             kandidatRef.transaction((currentVotes) => {
                 return (currentVotes || 0) + 1;
@@ -405,15 +349,13 @@
             setTimeout(() => {
                 document.getElementById('receipt-paper').style.transform = 'translateY(0)';
                 
-                // BUAT DATA UNIK UNTUK QR CODE (WAKTU MILIDETIK + KODE ACAK)
                 const waktu = new Date();
-                const timestamp = waktu.getTime(); // Mengambil waktu spesifik hingga milidetik
-                const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 huruf/angka acak
+                const timestamp = waktu.getTime();
+                const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
                 const uniqueId = `VOTE-TPS1-${timestamp}-${randomCode}`;
                 
                 document.getElementById('receipt-hash').innerText = uniqueId;
                 document.getElementById('qrcode-receipt').innerHTML = '';
-                // Generate QR Code dari Unique ID
                 new QRCode(document.getElementById("qrcode-receipt"), { text: uniqueId, width: 80, height: 80 }); 
 
                 setTimeout(() => {
