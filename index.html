@@ -25,80 +25,68 @@
         
         /* =========================================================
            ATURAN KHUSUS UNTUK LAYAR MENDATAR (LANDSCAPE)
-           Memastikan semua PAS di 1 layar, tanpa geser dan tanpa scroll
+           Memaksa semua muat di 1 layar tanpa memotong tombol
            ========================================================= */
         @media (orientation: landscape) {
-            /* 1. Header menjadi menyamping (horizontal) agar hemat tempat vertikal */
+            /* 1. Perkecil Header */
             .bg-header {
                 flex-direction: row !important;
-                padding: 6px 15px !important;
-                gap: 15px !important;
+                padding: 4px 10px !important;
+                gap: 10px !important;
                 justify-content: center !important;
             }
-            .bg-header img {
-                height: 40px !important; /* Logo dikecilkan */
-            }
-            .bg-header .text-center {
-                text-align: left !important;
-                margin-top: 0 !important;
-            }
-            .bg-header h1 {
-                font-size: 1.1rem !important;
-            }
-            .bg-header p {
-                font-size: 0.7rem !important;
-                display: inline-block;
-                margin-right: 5px;
-            }
+            .bg-header img { height: 35px !important; }
+            .bg-header .text-center { text-align: left !important; margin-top: 0 !important; }
+            .bg-header h1 { font-size: 1rem !important; }
+            .bg-header p { font-size: 0.65rem !important; display: inline-block; margin-right: 5px; margin-top: 0 !important; }
 
-            /* 2. Area Surat Suara tidak boleh di-scroll */
+            /* 2. Kurangi Jarak Ruang Kosong */
             #screen-voting .flex-grow {
-                padding: 10px !important;
-                justify-content: space-between !important;
+                padding: 5px 10px !important;
+                justify-content: center !important; /* Tarik ke tengah */
+                gap: 8px !important; /* Jarak antara kartu dan tombol */
                 overflow: hidden !important;
             }
             
-            /* 3. Kandidat 5 buah dipaksa sejajar pas membagi layar */
+            /* 3. Atur Ulang Kartu Kandidat & Pangkas Ketinggian Foto */
             #candidates-container {
                 flex-wrap: nowrap !important;
-                overflow: hidden !important;
                 justify-content: center !important;
                 align-items: center !important;
                 gap: 1.5% !important;
                 width: 100%;
-                height: 100%;
             }
             .candidate-card {
-                width: 18.5% !important; /* Membagi layar untuk 5 orang */
-                max-width: 160px !important;
+                width: 18.5% !important;
+                max-width: 150px !important;
                 margin: 0 !important;
-                padding-top: 22px !important;
+                padding-top: 18px !important;
             }
-            .candidate-card .absolute {
-                height: 20px !important;
-            }
-            .candidate-card .absolute span {
-                font-size: 0.85rem !important;
-            }
-            .candidate-card .p-2 {
-                padding: 5px !important;
-            }
+            .candidate-card .absolute { height: 18px !important; }
+            .candidate-card .absolute span { font-size: 0.8rem !important; }
+            .candidate-card .p-2 { padding: 4px !important; }
+            
+            /* KUNCI PERBAIKAN: Batasi tinggi foto agar tidak menjulang ke bawah */
             .candidate-card .aspect-\[3\/4\] {
-                margin-bottom: 5px !important;
+                aspect-ratio: auto !important; /* Matikan rasio bawaan */
+                height: 42vh !important; /* Tinggi foto maksimal 42% dari layar */
+                max-height: 120px !important; 
+                margin-bottom: 4px !important;
             }
             .candidate-card h3 {
                 font-size: 0.65rem !important;
-                min-height: 20px !important;
+                min-height: 14px !important;
                 line-height: 1.1;
             }
 
-            /* 4. Tombol ditarik ke atas sedikit agar tidak terpotong */
-            .mt-8 { margin-top: 5px !important; }
-            .sm\:mt-12 { margin-top: 5px !important; }
+            /* 4. Ruang Tombol */
+            .mt-8 { margin-top: 0 !important; }
+            .sm\:mt-12 { margin-top: 0 !important; }
             .pb-8 { padding-bottom: 5px !important; }
             #btn-pilih {
-                padding: 8px 30px !important;
+                padding: 6px 40px !important;
                 font-size: 0.9rem !important;
+                border-radius: 8px !important;
             }
         }
     </style>
@@ -218,7 +206,7 @@
     <script>
         // Data Kandidat
         const candidates = [
-            { id: 1, name: "VIRDA EMERITA WINESTRI", photo: "virda.png" },
+            { id: 1, name: "VIRDA EMERITA WISENTRI", photo: "virda.png" },
             { id: 2, name: "KANDIDAT 2", photo: "calon1.jpg" },
             { id: 3, name: "KANDIDAT 3", photo: "calon1.jpg" },
             { id: 4, name: "KANDIDAT 4", photo: "calon1.jpg" },
