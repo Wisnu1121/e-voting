@@ -22,6 +22,85 @@
         }
         .fade-in { animation: fadeIn 0.5s ease-in-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* =========================================================
+           ATURAN KHUSUS UNTUK LAYAR MENDATAR (LANDSCAPE)
+           Memastikan semua PAS di 1 layar, tanpa geser dan tanpa scroll
+           ========================================================= */
+        @media (orientation: landscape) {
+            /* 1. Header menjadi menyamping (horizontal) agar hemat tempat vertikal */
+            .bg-header {
+                flex-direction: row !important;
+                padding: 6px 15px !important;
+                gap: 15px !important;
+                justify-content: center !important;
+            }
+            .bg-header img {
+                height: 40px !important; /* Logo dikecilkan */
+            }
+            .bg-header .text-center {
+                text-align: left !important;
+                margin-top: 0 !important;
+            }
+            .bg-header h1 {
+                font-size: 1.1rem !important;
+            }
+            .bg-header p {
+                font-size: 0.7rem !important;
+                display: inline-block;
+                margin-right: 5px;
+            }
+
+            /* 2. Area Surat Suara tidak boleh di-scroll */
+            #screen-voting .flex-grow {
+                padding: 10px !important;
+                justify-content: space-between !important;
+                overflow: hidden !important;
+            }
+            
+            /* 3. Kandidat 5 buah dipaksa sejajar pas membagi layar */
+            #candidates-container {
+                flex-wrap: nowrap !important;
+                overflow: hidden !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 1.5% !important;
+                width: 100%;
+                height: 100%;
+            }
+            .candidate-card {
+                width: 18.5% !important; /* Membagi layar untuk 5 orang */
+                max-width: 160px !important;
+                margin: 0 !important;
+                padding-top: 22px !important;
+            }
+            .candidate-card .absolute {
+                height: 20px !important;
+            }
+            .candidate-card .absolute span {
+                font-size: 0.85rem !important;
+            }
+            .candidate-card .p-2 {
+                padding: 5px !important;
+            }
+            .candidate-card .aspect-\[3\/4\] {
+                margin-bottom: 5px !important;
+            }
+            .candidate-card h3 {
+                font-size: 0.65rem !important;
+                min-height: 20px !important;
+                line-height: 1.1;
+            }
+
+            /* 4. Tombol ditarik ke atas sedikit agar tidak terpotong */
+            .mt-8 { margin-top: 5px !important; }
+            .sm\:mt-12 { margin-top: 5px !important; }
+            .pb-8 { padding-bottom: 5px !important; }
+            #btn-pilih {
+                padding: 8px 30px !important;
+                font-size: 0.9rem !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-full flex flex-col overflow-hidden relative text-sm sm:text-base">
@@ -71,6 +150,7 @@
 
     <!-- 2. SCREEN: SURAT SUARA -->
     <div id="screen-voting" class="hidden flex-col h-full w-full absolute inset-0 bg-white">
+        <!-- Area Header -->
         <div class="bg-header text-white py-4 px-4 sm:py-6 sm:px-6 shadow-md flex flex-col items-center justify-center relative shrink-0 gap-2">
             <img src="suang.png" class="h-16 sm:h-20 object-contain drop-shadow-md" alt="Logo">
             <div class="text-center mt-1">
@@ -138,7 +218,7 @@
     <script>
         // Data Kandidat
         const candidates = [
-            { id: 1, name: "VIRDA EMERITA WISENTRI", photo: "virda.png" },
+            { id: 1, name: "VIRDA EMERITA WINESTRI", photo: "virda.png" },
             { id: 2, name: "KANDIDAT 2", photo: "calon1.jpg" },
             { id: 3, name: "KANDIDAT 3", photo: "calon1.jpg" },
             { id: 4, name: "KANDIDAT 4", photo: "calon1.jpg" },
@@ -280,10 +360,17 @@
 
             setTimeout(() => {
                 document.getElementById('receipt-paper').style.transform = 'translateY(0)';
-                const hashStr = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                document.getElementById('receipt-hash').innerText = hashStr;
+                
+                // BUAT DATA UNIK UNTUK QR CODE (WAKTU MILIDETIK + KODE ACAK)
+                const waktu = new Date();
+                const timestamp = waktu.getTime(); // Mengambil waktu spesifik hingga milidetik
+                const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 huruf/angka acak
+                const uniqueId = `VOTE-TPS1-${timestamp}-${randomCode}`;
+                
+                document.getElementById('receipt-hash').innerText = uniqueId;
                 document.getElementById('qrcode-receipt').innerHTML = '';
-                new QRCode(document.getElementById("qrcode-receipt"), { text: hashStr, width: 80, height: 80 }); 
+                // Generate QR Code dari Unique ID
+                new QRCode(document.getElementById("qrcode-receipt"), { text: uniqueId, width: 80, height: 80 }); 
 
                 setTimeout(() => {
                     actionContainer.classList.remove('hidden');
