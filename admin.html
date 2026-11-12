@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Admin - Pilkades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .bg-header-admin { background: linear-gradient(to right, #0f172a, #1e293b); }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- KONFIGURASI FIREBASE ANDA DI SINI -->
+    <script>
+        // MASUKKAN KODE FIREBASE CONFIG DARI LANGKAH 1 DI BAWAH INI:
+        const firebaseConfig = {
+  apiKey: "AIzaSyBymd_mXiq2Jq2sqlNzq1Ajd4EPbhbAgXY",
+  authDomain: "pilkadespurwadadi.firebaseapp.com",
+  databaseURL: "https://pilkadespurwadadi-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pilkadespurwadadi",
+  storageBucket: "pilkadespurwadadi.firebasestorage.app",
+  messagingSenderId: "847293750616",
+  appId: "1:847293750616:web:b429fd9b4548df94c4592d"
+};
+        
+        // Inisialisasi Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+    </script>
+
+    <!-- HEADER ADMIN -->
+    <div class="bg-header-admin text-white py-6 px-8 shadow-md flex justify-between items-center shrink-0">
+        <div>
+            <h1 class="text-2xl font-bold tracking-wide">SERVER PUSAT: HASIL VOTING</h1>
+            <p class="text-sm text-slate-300">Pilkades Purwadadi Timur - Realtime Sinkronisasi</p>
+        </div>
+        <div class="flex gap-4">
+            <span id="koneksi-status" class="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/50 rounded-md font-medium text-sm flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                Terhubung ke Server
+            </span>
+            <button onclick="resetVotes()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-medium text-sm transition shadow">
+                Reset Semua Suara (TPS)
+            </button>
+        </div>
+    </div>
+
+    <!-- KONTEN -->
+    <div class="p-8 max-w-5xl mx-auto w-full flex-grow overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+            <h2 class="text-lg text-slate-500 font-semibold mb-1">Total Suara Masuk Seluruh TPS</h2>
+            <p id="total-suara-display" class="text-5xl font-extrabold text-blue-600 mt-2">Memuat...</p>
+        </div>
+
+        <div id="results-bars-container" class="flex flex-col gap-4 pb-8">
+            <p class="text-center text-slate-500">Menunggu data dari internet...</p>
+        </div>
+    </div>
+
+    <script>
+        // Data Kandidat untuk Admin (Sesuai dengan index terbaru)
+        const candidates = [
+            { id: 1, name: "VIRDA EMERITA WISENTRI", photo: "virda.png" },
+            { id: 2, name: "KANDIDAT 2", photo: "calon1.jpg" },
+            { id: 3, name: "KANDIDAT 3", photo: "calon1.jpg" },
+            { id: 4, name: "KANDIDAT 4", photo: "calon1.jpg" },
+            { id: 5, name: "KANDIDAT 5", photo: "calon1.jpg" }
+        ];
+
+        // MENDENGARKAN PERUBAHAN DATA DARI SERVER (REAL-TIME)
+        const dbRef = db.ref('perolehan_suara');
+        
+        dbRef.on('value', (snapshot) => {
+            const dataServer = snapshot.val() || {};
+            let totalSuara = 0;
+            
+            // Format ulang data agar sesuai
+            let perolehan = {};
+            candidates.forEach(c => {
+                const suaraKandidat = dataServer['kandidat_' + c.id] || 0;
+                perolehan[c.id] = suaraKandidat;
+                totalSuara += suaraKandidat;
+            });
+            
+            // Update Angka Total
+            document.getElementById('total-suara-display').innerText = totalSuara;
+            
+            // Render Grafik
+            renderDashboard(perolehan, totalSuara);
+        }, (error) => {
+            document.getElementById('koneksi-status').innerHTML = "Terputus / Gagal";
+            document.getElementById('koneksi-status').classList.replace('text-green-400', 'text-red-400');
+        });
+
+        function renderDashboard(perolehan, totalSuara) {
+            const container = document.getElementById('results-bars-container');
+            container.innerHTML = '';
+            
+            // Sortir dari suara terbanyak
+            let sortedCandidates = [...candidates].sort((a, b) => perolehan[b.id] - perolehan[a.id]);
+            
+            sortedCandidates.forEach((c, index) => {
+                const votes = perolehan[c.id] || 0;
+                const percentage = totalSuara === 0 ? 0 : ((votes / totalSuara) * 100).toFixed(1);
+                const isWinner = index === 0 && votes > 0;
+                
+                container.innerHTML += `
+                    <div class="bg-white p-5 rounded-xl shadow-sm border ${isWinner ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'} flex items-center gap-6">
+                        <div class="w-16 flex-shrink-0 text-center">
+                            <span class="text-3xl font-black text-slate-300">#${c.id}</span>
+                        </div>
+                        <img src="${c.photo}" class="w-16 h-16 object-cover rounded-full shadow-sm">
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-slate-800 ${isWinner ? 'text-blue-700' : ''}">${c.name}</h3>
+                            <div class="w-full bg-slate-100 rounded-full h-4 mt-2 overflow-hidden">
+                                <div class="bg-gradient-to-r ${isWinner ? 'from-blue-500 to-indigo-600' : 'from-slate-400 to-slate-500'} h-4 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                        <div class="text-right w-24">
+                            <p class="text-3xl font-black ${isWinner ? 'text-blue-600' : 'text-slate-700'}">${votes}</p>
+                            <p class="text-sm font-semibold text-slate-400">${percentage}%</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function resetVotes() {
+            if(confirm("PERINGATAN BAHAYA: Anda yakin ingin MENGHAPUS SEMUA SUARA di Database KPU secara permanen?")) {
+                db.ref('perolehan_suara').remove().then(() => {
+                    alert("Seluruh data TPS berhasil di-reset.");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
